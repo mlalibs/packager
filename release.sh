@@ -34,11 +34,13 @@ cf_token=
 github_token=
 wowi_token=
 wago_token=
+singularity_token=
 
 # Variables set via command-line options
 slug=
 addonid=
 wagoid=
+singularityid=
 topdir=
 releasedir=
 overwrite=
@@ -51,6 +53,7 @@ skip_zipfile=
 skip_upload=
 skip_cf_upload=
 pkgmeta_file=
+game="wow"
 game_type="retail"
 file_type=
 
@@ -69,26 +72,28 @@ exit_code=0
 # Process command-line options
 usage() {
 	echo "Usage: release.sh [-cdelLosuz] [-t topdir] [-r releasedir] [-p curse-id] [-w wowi-id] [-g game-version] [-m pkgmeta.yml]" >&2
-	echo "  -c               Skip copying files into the package directory." >&2
-	echo "  -d               Skip uploading." >&2
-	echo "  -e               Skip checkout of external repositories." >&2
-	echo "  -l               Skip @localization@ keyword replacement." >&2
-	echo "  -L               Only do @localization@ keyword replacement (skip upload to CurseForge)." >&2
-	echo "  -o               Keep existing package directory, overwriting its contents." >&2
-	echo "  -s               Create a stripped-down \"nolib\" package." >&2
-	echo "  -u               Use Unix line-endings." >&2
-	echo "  -z               Skip zip file creation." >&2
-	echo "  -t topdir        Set top-level directory of checkout." >&2
-	echo "  -r releasedir    Set directory containing the package directory. Defaults to \"\$topdir/.release\"." >&2
-	echo "  -p curse-id      Set the project id used on CurseForge for localization and uploading. (Use 0 to unset the TOC value)" >&2
-	echo "  -w wowi-id       Set the addon id used on WoWInterface for uploading. (Use 0 to unset the TOC value)" >&2
-	echo "  -a wago-id       Set the project id used on Wago Addons for uploading. (Use 0 to unset the TOC value)" >&2
-	echo "  -g game-version  Set the game version to use for CurseForge uploading." >&2
-	echo "  -m pkgmeta.yaml  Set the pkgmeta file to use." >&2
+	echo "  -c                 Skip copying files into the package directory." >&2
+	echo "  -d                 Skip uploading." >&2
+	echo "  -e                 Skip checkout of external repositories." >&2
+	echo "  -l                 Skip @localization@ keyword replacement." >&2
+	echo "  -L                 Only do @localization@ keyword replacement (skip upload to CurseForge)." >&2
+	echo "  -o                 Keep existing package directory, overwriting its contents." >&2
+	echo "  -s                 Create a stripped-down \"nolib\" package." >&2
+	echo "  -u                 Use Unix line-endings." >&2
+	echo "  -z                 Skip zip file creation." >&2
+	echo "  -t topdir          Set top-level directory of checkout." >&2
+	echo "  -r releasedir      Set directory containing the package directory. Defaults to \"\$topdir/.release\"." >&2
+	echo "  -p curse-id        Set the project id used on CurseForge for localization and uploading. (Use 0 to unset the TOC value)" >&2
+	echo "  -w wowi-id         Set the addon id used on WoWInterface for uploading. (Use 0 to unset the TOC value)" >&2
+	echo "  -a wago-id         Set the project id used on Wago Addons for uploading. (Use 0 to unset the TOC value)" >&2
+	echo "  -x singularity-id  Set the project id used on SingularityMods for uploading. (Use 0 to unset the TOC value)" >&2
+	echo "  -G game            Set the game  to use for Singularity uploading." >&2
+	echo "  -g game-version    Set the game version to use for CurseForge and Singularity uploading." >&2
+	echo "  -m pkgmeta.yaml    Set the pkgmeta file to use." >&2
 }
 
 OPTIND=1
-while getopts ":celLzusop:dw:a:r:t:g:m:" opt; do
+while getopts ":celLzusop:dw:a:x:r:t:G:g:m:" opt; do
 	case $opt in
 	c)
 		# Skip copying files into the package directory.
@@ -124,6 +129,9 @@ while getopts ":celLzusop:dw:a:r:t:g:m:" opt; do
 	a)
 		wagoid="$OPTARG"
 		;;
+	x)
+		singularityid="$OPTARG"
+		;;
 	r)
 		# Set the release directory to a non-default value.
 		releasedir="$OPTARG"
@@ -149,6 +157,9 @@ while getopts ":celLzusop:dw:a:r:t:g:m:" opt; do
 	z)
 		# Skip generating the zipfile.
 		skip_zipfile="true"
+		;;
+	G)
+		game="$OPTARG"
 		;;
 	g)
 		# shortcut for classic
@@ -287,6 +298,7 @@ fi
 [ -z "$github_token" ] && github_token=$GITHUB_OAUTH
 [ -z "$wowi_token" ] && wowi_token=$WOWI_API_TOKEN
 [ -z "$wago_token" ] && wago_token=$WAGO_API_TOKEN
+[ -z "$singularity_token" ] && singularity_token=$SINGULARITY_API_TOKEN
 
 # Set $releasedir to the directory which will contain the generated addon zipfile.
 if [ -z "$releasedir" ]; then
@@ -918,6 +930,9 @@ fi
 if [ -z "$wagoid" ]; then
 	wagoid=$( echo "$toc_file" | awk '/^## X-Wago-ID:/ { print $NF; exit }' )
 fi
+if [ -z "$singularityid" ]; then
+	singularityid=$( echo "$toc_file" | awk '/^## X-Singularity-ID:/ { print $NF; exit }' )
+fi
 unset toc_file
 
 # unset project ids if they are set to 0
@@ -966,6 +981,9 @@ if [ -n "$addonid" ]; then
 fi
 if [ -n "$wagoid" ]; then
 	echo "Wago ID: $wagoid${wago_token:+ [token set]}"
+fi
+if [ -n "$singularityid" ]; then
+	echo "Wago ID: $singularityid${singularity_token:+ [token set]}"
 fi
 if [ -n "$project_github_slug" ]; then
 	echo "GitHub: $project_github_slug${github_token:+ [token set]}"
@@ -2198,15 +2216,17 @@ if [ -z "$skip_zipfile" ]; then
 	upload_curseforge=$( [[ -z "$skip_upload" && -z "$skip_cf_upload" && -n "$slug" && -n "$cf_token" && -n "$project_site" ]] && echo true )
 	upload_wowinterface=$( [[ -z "$skip_upload" && -n "$tag" && -n "$addonid" && -n "$wowi_token" ]] && echo true )
 	upload_wago=$( [[ -z "$skip_upload" && -n "$wagoid" && -n "$wago_token" ]] && echo true )
+	upload_singularity=$( [[ -z "$skip_upload" && -n "$singularityid" && -n "$singularity_token" ]] && echo true )
 	upload_github=$( [[ -z "$skip_upload" && -n "$tag" && -n "$project_github_slug" && -n "$github_token" ]] && echo true )
 
-	if [[ -n "$upload_curseforge" || -n "$upload_wowinterface" || -n "$upload_github" || -n "$upload_wago" ]] && ! hash jq &>/dev/null; then
+	if [[ -n "$upload_curseforge" || -n "$upload_wowinterface" || -n "$upload_github" || -n "$upload_wago" || -n "$upload_singularity" ]] && ! hash jq &>/dev/null; then
 		echo "Skipping upload because \"jq\" was not found."
 		echo
 		upload_curseforge=
 		upload_wowinterface=
 		upload_wago=
 		upload_github=
+		upload_singularity=
 		exit_code=1
 	fi
 
@@ -2415,6 +2435,72 @@ if [ -z "$skip_zipfile" ]; then
 				-F "metadata=<-" \
 				-F "file=@$archive" \
 				"https://addons.wago.io/api/projects/$wagoid/version" ) &&
+		{
+			case $result in
+				200|201) echo "Success!" ;;
+				302)
+					echo "Error! ($result)"
+					# don't need to ouput the redirect page
+					exit_code=1
+					;;
+				404)
+					echo "Error! No Wago project for id \"$wagoid\" found."
+					exit_code=1
+					;;
+				*)
+					echo "Error! ($result)"
+					if [ -s "$resultfile" ]; then
+						echo "$(<"$resultfile")"
+					fi
+					exit_code=1
+					;;
+			esac
+		} || {
+			exit_code=1
+		}
+		echo
+
+		rm -f "$resultfile" 2>/dev/null
+	fi
+
+		# Upload to Singularity
+	if [ -n "$upload_singularity" ] ; then
+		_singularity_game_id=1
+		_singularity_game_version="wow_retail"
+		if [ "$game" = "wow" ]; then
+			if [ "$game_type" = "classic" ]; then
+				_singularity_game_version="wow_classic"
+			fi
+		fi
+		if [ "$game" = "wow" ]; then
+			_singularity_game_id=2
+			_singularity_game_version="eso"
+		fi
+
+		_singularity_channel=$file_type
+
+		_singularity_payload=$( cat <<-EOF
+		{
+			"displayName": "$project_version$classic_tag",
+		  "label": "$project_version$classic_tag",
+			"game": "$_singularity_game_id",
+		  "gameVersion": "$_singularity_game_version",
+		  "channel": "$_singularity_channel",
+		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" )
+			"changelogType": "$changelog_markup"
+		}
+		EOF
+		)
+
+		echo "Uploading $archive_name ($game_version $file_type) to Singularity"
+		resultfile="$releasedir/singularity_result.json"
+		result=$( echo "$_singularity_payload" | curl -sS --retry 3 --retry-delay 10 \
+				-w "%{http_code}" -o "$resultfile" \
+				-H "x-api-key: $singularity_token" \
+				-H "accept: application/json" \
+				-F "metadata=<-" \
+				-F "file=@$archive" \
+				"https://dev.api.singularitymods.com/api/v1/project/$singularityid/publish" ) &&
 		{
 			case $result in
 				200|201) echo "Success!" ;;
