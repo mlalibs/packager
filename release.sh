@@ -983,7 +983,7 @@ if [ -n "$wagoid" ]; then
 	echo "Wago ID: $wagoid${wago_token:+ [token set]}"
 fi
 if [ -n "$singularityid" ]; then
-	echo "Wago ID: $singularityid${singularity_token:+ [token set]}"
+	echo "Singularity ID: $singularityid${singularity_token:+ [token set]}"
 fi
 if [ -n "$project_github_slug" ]; then
 	echo "GitHub: $project_github_slug${github_token:+ [token set]}"
@@ -2485,7 +2485,7 @@ if [ -z "$skip_zipfile" ]; then
 			"gameId": "$_singularity_game_id",
 		  "gameVersion": "$_singularity_game_version",
 		  "channel": "$_singularity_channel",
-		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" )
+		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" ),
 			"changelogType": "$changelog_markup"
 		}
 		EOF
