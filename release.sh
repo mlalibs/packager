@@ -2483,7 +2483,8 @@ if [ -z "$skip_zipfile" ]; then
 		{
 			"displayName": "$project_version$classic_tag",
 			"gameId": "$_singularity_game_id",
-		  "gameVersion": "$_singularity_game_version",
+			"gameVersion": "$game_version",
+		  "gameVersionFlavor": "$_singularity_game_version",
 		  "channel": "$_singularity_channel",
 		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" ),
 			"changelogType": "$changelog_markup"
