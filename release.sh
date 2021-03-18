@@ -2482,8 +2482,7 @@ if [ -z "$skip_zipfile" ]; then
 		_singularity_payload=$( cat <<-EOF
 		{
 			"displayName": "$project_version$classic_tag",
-		  "label": "$project_version$classic_tag",
-			"game": "$_singularity_game_id",
+			"gameId": "$_singularity_game_id",
 		  "gameVersion": "$_singularity_game_version",
 		  "channel": "$_singularity_channel",
 		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" )
