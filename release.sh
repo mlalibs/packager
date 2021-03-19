@@ -2518,13 +2518,13 @@ if [ -z "$skip_zipfile" ]; then
 		read -ra _eso_api_versions <<< "$toc_version"
 		_eso_api_version_string=
 		if [[ "$(declare -p _eso_api_versions)" =~ "declare -a" ]]; then
-			_eso_api_version_string=${_eso_api_version_string[0]}
+			_eso_api_version_string=${_eso_api_versions[0]}
 			if [ ${#_eso_api_versions} > 1 ]; then
 				_eso_api_version_string+="+"
-				_eso_api_version_string+=${_eso_api_version_string[1]}
+				_eso_api_version_string+=${_eso_api_versions[1]}
 			fi
 		else
-		_eso_api_version_string=_eso_api_versions
+			_eso_api_version_string=$toc_version
 		fi
 
 		echo "$_eso_api_version_string"
