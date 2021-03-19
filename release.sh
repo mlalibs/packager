@@ -2535,7 +2535,7 @@ if [ -z "$skip_zipfile" ]; then
 			echo "YES"
 			if [ -z "$game_version" ]; then
 				echo "No"
-				game_version=$_singularity_versions
+				game_version=${_singularity_versions//\"/\'}
 			fi
 		fi
 		echo "$game_version"
