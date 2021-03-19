@@ -2503,45 +2503,39 @@ if [ -z "$skip_zipfile" ]; then
 		# Upload to Singularity
 	echo "$game"
 	echo "$toc_version"
-	if [ -n "$upload_singularity" ] && [ $game == 'eso' ]; then
+	if [ -n "$upload_singularity" ]; then
 		_singularity_game_id=1
-		_singularity_game_version="wow_retail"
+		_singularity_game_version_flavor="wow_retail"
 		if [ "$game" = "wow" ]; then
 			if [ "$game_type" = "classic" ]; then
-				_singularity_game_version="wow_classic"
+				_singularity_game_version_flavor="wow_classic"
 			fi
 		fi
 		if [ "$game" = "eso" ]; then
 			_singularity_game_id=2
-			_singularity_game_version="eso"
+			_singularity_game_version_flavor="eso"
 		fi
-
-		read -ra _eso_api_versions <<< "$toc_version"
-		echo ${_eso_api_versions[*]}
-		echo ${#_eso_api_versions[*]}
-		_eso_api_version_string=
-		if [ ${#_eso_api_versions[*]} -gt 0 ]; then
-			_eso_api_version_string=${_eso_api_versions[0]}
-			if [ ${#_eso_api_versions[*]} -gt 1 ]; then
-				_eso_api_version_string+="+"
-				_eso_api_version_string+=${_eso_api_versions[1]}
+		if [ -z "$game_version" ]; then
+			read -ra _api_versions <<< "$toc_version"	
+			echo ${_api_versions[*]}
+			echo ${#_api_versions[*]}
+			_api_version_string=
+			if [ ${#_api_versions[*]} -gt 0 ]; then
+				_api_version_string=${_api_versions[0]}
+				if [ ${#_api_versions[*]} -gt 1 ]; then
+					_api_version_string+="+"
+					_api_version_string+=${_api_versions[1]}
+				fi
 			fi
-		fi
-
-		echo "$_eso_api_version_string"
-		_singularity_versions=$( curl -s -H "x-api-token: $singularity_token" https://dev.api.singularitymods.com/api/v1/game/releases/$_singularity_game_id/$_eso_api_version_string)
-		echo "$_singularity_versions"
-		if [ -n "$_singularity_versions" ]; then
-			echo "YES"
-			if [ -z "$game_version" ]; then
-				# jq -c '["8.0.1","7.3.5"] as $v | map(select(.name as $x | $v | index($x)) | .id)'
-				# echo "$_cf_versions" | jq -c --argjson v "$_v" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null
-				game_version=$( echo "$_singularity_versions" | jq -r .versions 2>/dev/null )
-				echo "$game_version"
-				# game_version=${_singularity_versions//\"/\'}
+			_singularity_version_resp=$( curl -s -H "x-api-token: $singularity_token" https://dev.api.singularitymods.com/api/v1/game/releases/$_singularity_game_id/$_api_version_string)
+			if [ -n "$_singularity_version_resp" ]; then
+				_singularity_game_version=$( echo "$_singularity_version_resp" | jq -r .versions 2>/dev/null )
+			else
+				_singularity_game_version = "[]"
 			fi
+		else
+			_singularity_game_version = "[\"$game_version\"]"
 		fi
-		echo "$game_version"
 	fi
 
 	if [ -n "$upload_singularity" ] ; then
@@ -2550,8 +2544,8 @@ if [ -z "$skip_zipfile" ]; then
 		{
 			"displayName": "$project_version$classic_tag",
 			"gameId": "$_singularity_game_id",
-			"gameVersion": $game_version,
-		  "gameVersionFlavor": "$_singularity_game_version",
+			"gameVersion": $_singularity_game_version,
+		  "gameVersionFlavor": "$_singularity_game_version_flavor",
 		  "channel": "$_singularity_channel",
 		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" ),
 			"changelogType": "$changelog_markup"
