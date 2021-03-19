@@ -2520,7 +2520,7 @@ if [ -z "$skip_zipfile" ]; then
 		_eso_api_version_string=
 		if [[ "$(declare -p _eso_api_versions)" =~ "declare -a" ]]; then
 			_eso_api_version_string=${_eso_api_versions[0]}
-			if [ ${#_eso_api_versions} > 1 ]; then
+			if [ ${#_eso_api_versions} -gt 1 ]; then
 				_eso_api_version_string+="+"
 				_eso_api_version_string+=${_eso_api_versions[1]}
 			fi
