@@ -2535,7 +2535,7 @@ if [ -z "$skip_zipfile" ]; then
 				_singularity_game_version = "[]"
 			fi
 		else
-			_singularity_game_version = "[\"$game_version\"]"
+			_singularity_game_version="[\"$game_version\"]"
 		fi
 	fi
 
