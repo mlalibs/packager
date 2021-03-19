@@ -2501,6 +2501,7 @@ if [ -z "$skip_zipfile" ]; then
 
 		# Upload to Singularity
 	echo "$game"
+	echo "$toc_version"
 	if [ -n "$upload_singularity" ] && [ $game == 'eso' ]; then
 		_singularity_game_id=1
 		_singularity_game_version="wow_retail"
