@@ -2532,6 +2532,7 @@ if [ -z "$skip_zipfile" ]; then
 		_singularity_versions=$( curl -s -H "x-api-token: $singularity_token" https://dev.api.singularitymods.com/api/v1/game/releases/$_singularity_game_id/$_eso_api_version_string)
 		echo "$_singularity_versions"
 		if [ -n "$_singularity_versions" ]; then
+			echo "YES"
 			if [ -n "$game_version" || $game_version == "" ]; then
 				echo "No"
 				game_version=$_singularity_versions
