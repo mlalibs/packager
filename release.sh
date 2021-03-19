@@ -2500,7 +2500,7 @@ if [ -z "$skip_zipfile" ]; then
 	fi
 
 		# Upload to Singularity
-
+	echo "$game"
 	if [ -n "$upload_singularity" ] && [ $game == 'eso' ]; then
 		_singularity_game_id=1
 		_singularity_game_version="wow_retail"
@@ -2523,7 +2523,7 @@ if [ -z "$skip_zipfile" ]; then
 			_eso_api_version_string+="+"
 			_eso_api_version_string+=${_eso_api_version_string[1]}
 		fi
-
+		echo "$_eso_api_version_string"
 		_singularity_versions=$( curl -s -H "x-api-token: $singularity_token" https://dev.api.singularitymods.com/api/v1/game/releases/$_singularity_game_id/$_eso_api_version_string)
 		if [ -n "$_singularity_versions" ]; then
 			if [ -n "$game_version" ]; then
