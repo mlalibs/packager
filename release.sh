@@ -2534,7 +2534,10 @@ if [ -z "$skip_zipfile" ]; then
 		if [ -n "$_singularity_versions" ]; then
 			echo "YES"
 			if [ -z "$game_version" ]; then
-				echo "No"
+				# jq -c '["8.0.1","7.3.5"] as $v | map(select(.name as $x | $v | index($x)) | .id)'
+				echo "$_singularity_versions" | jq -c --argjson v
+				echo "$v"
+				game_version=$v
 				# game_version=${_singularity_versions//\"/\'}
 			fi
 		fi
@@ -2548,7 +2551,7 @@ m
 		{
 			"displayName": "$project_version$classic_tag",
 			"gameId": "$_singularity_game_id",
-			"gameVersion": $game_version,
+			"gameVersion": "$game_version",
 		  "gameVersionFlavor": "$_singularity_game_version",
 		  "channel": "$_singularity_channel",
 		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" ),
