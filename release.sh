@@ -2533,6 +2533,7 @@ if [ -z "$skip_zipfile" ]; then
 		echo "$_singularity_versions"
 		if [ -n "$_singularity_versions" ]; then
 			if [ -n "$game_version" ]; then
+			echo "No"
 				game_version=$_singularity_versions
 			fi
 		fi
