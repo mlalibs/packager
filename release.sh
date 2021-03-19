@@ -2536,7 +2536,7 @@ if [ -z "$skip_zipfile" ]; then
 			if [ -z "$game_version" ]; then
 				# jq -c '["8.0.1","7.3.5"] as $v | map(select(.name as $x | $v | index($x)) | .id)'
 				# echo "$_cf_versions" | jq -c --argjson v "$_v" 'map(select(.name as $x | $v | index($x)) | .id) | select(length > 0)' 2>/dev/null
-				game_version=$( echo "$_singularity_versions" | jq -r 2>/dev/null )
+				game_version=$( echo "$_singularity_versions" | jq -r .versions 2>/dev/null )
 				echo "$game_version"
 				# game_version=${_singularity_versions//\"/\'}
 			fi
