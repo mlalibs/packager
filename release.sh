@@ -2520,18 +2520,17 @@ if [ -z "$skip_zipfile" ]; then
 		echo ${_eso_api_versions[*]}
 		echo ${#_eso_api_versions[*]}
 		_eso_api_version_string=
-		if [[ "$(declare -p _eso_api_versions)" =~ "declare -a" ]]; then
+		if [ ${#_eso_api_versions[*]} -gt 0 ]; then
 			_eso_api_version_string=${_eso_api_versions[0]}
 			if [ ${#_eso_api_versions[*]} -gt 1 ]; then
 				_eso_api_version_string+="+"
 				_eso_api_version_string+=${_eso_api_versions[1]}
 			fi
-		else
-			_eso_api_version_string=$toc_version
 		fi
 
 		echo "$_eso_api_version_string"
 		_singularity_versions=$( curl -s -H "x-api-token: $singularity_token" https://dev.api.singularitymods.com/api/v1/game/releases/$_singularity_game_id/$_eso_api_version_string)
+		echo "$_singularity_versions"
 		if [ -n "$_singularity_versions" ]; then
 			if [ -n "$game_version" ]; then
 				$game_version=$_singularity_versions
