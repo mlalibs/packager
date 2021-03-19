@@ -62,6 +62,10 @@ game_version=
 game_version_id=
 toc_version=
 alpha=
+is_library=
+depends_on=
+optional_depends_on=
+eso_addon_version=
 
 ## END USER OPTIONS
 
@@ -754,6 +758,9 @@ if [ -f "$pkgmeta_file" ]; then
 			package-as)
 				package=$yaml_value
 				;;
+			game)
+				game=$yaml_value
+				;;
 			wowi-create-changelog)
 				if [ "$yaml_value" = "no" ]; then
 					wowi_gen_changelog=
@@ -875,26 +882,43 @@ elif [ "$repository_type" = "hg" ]; then
 	fi
 fi
 
-# TOC file processing.
+# Manifest file processing.
 tocfile=$(
 	cd "$topdir" || exit
-	filename=$( ls ./*.toc -1 2>/dev/null | head -n1 )
+	if [[ "$game" == "wow" ]]; then
+		filename=$( ls ./*.toc -1 2>/dev/null | head -n1 )
+	fi
+	if [[ "$game" == "eso" ]]; then
+		filename=$( ls ./*.txt -1 2>/dev/null | head -n1 )
+	fi
+	
 	if [[ -z "$filename" && -n "$package" ]]; then
 		# Handle having the core addon in a sub dir, which people have starting doing
 		# for some reason. Tons of caveats, just make the base dir your base addon people!
-		filename=$( ls "$package"/*.toc -1 2>/dev/null | head -n1 )
+		if [[ "$game" == "wow" ]]; then
+			filename=$( ls "$package"/*.toc -1 2>/dev/null | head -n1 )
+		fi
+		if [[ "$game" == "eso" ]]; then
+			filename=$( ls "$package"/*.txt -1 2>/dev/null | head -n1 )
+		fi
 	fi
 	echo "$filename"
 )
 if [[ -z "$tocfile" || ! -f "$topdir/$tocfile" ]]; then
-	echo "Could not find an addon TOC file. In another directory? Make sure it matches the 'package-as' in .pkgmeta" >&2
+	echo "Could not find an addon manifest file. In another directory? Make sure it matches the 'package-as' in .pkgmeta" >&2
 	exit 1
 fi
 
-# Set the package name from the TOC filename.
-toc_name=$( basename "$tocfile" | sed 's/\.toc$//' )
+# Set the package name from the manifest filename.
+if [[ "$game" == "wow" ]]; then
+	toc_name=$( basename "$tocfile" | sed 's/\.toc$//' )
+fi
+if [[ "$game" == "eso" ]]; then
+	toc_name=$( basename "$tocfile" | sed 's/\.txt$//' )
+fi
+
 if [[ -n "$package" && "$package" != "$toc_name" ]]; then
-	echo "Addon package name does not match TOC file name." >&2
+	echo "Addon package name does not match manifest file name." >&2
 	exit 1
 fi
 if [ -z "$package" ]; then
@@ -903,17 +927,28 @@ fi
 
 # Get the interface version for setting upload version.
 toc_file=$( sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$topdir/$tocfile" ) # go away bom, crlf
-if [ "$game_type" = "classic" ] && [ -z "$toc_version" ] && [ -z "$game_version" ]; then
+if [[ "$game" == "eso" ]]; then
+	toc_version=$( echo "$toc_file" | awk '/^## APIVersion:/ { print $NF; exit }' )
+fi
+if [[ "$game" == "wow" ]] && [ "$game_type" = "classic" ] && [ -z "$toc_version" ] && [ -z "$game_version" ]; then
 	toc_version=$( echo "$toc_file" | awk '/## Interface:[[:space:]]*113/ { print $NF; exit }' )
 fi
-if [ -z "$toc_version" ]; then
+if [[ "$game" == "wow" ]] && [ -z "$toc_version" ]; then
 	toc_version=$( echo "$toc_file" | awk '/^## Interface:/ { print $NF; exit }' )
 	if [[ "$toc_version" == "113"* ]]; then
 		game_type="classic"
 	fi
 fi
-if [ -z "$game_version" ]; then
+if [[ "$game" == "wow" ]] && [ -z "$game_version" ]; then
 	game_version="${toc_version:0:1}.$( printf "%d" ${toc_version:1:2} ).$( printf "%d" ${toc_version:3:2} )"
+fi
+
+# If ESO, grab other important information
+if [[ "$game" == "eso" ]]; then
+	is_library==$( echo "$toc_file" | awk '/^## IsLibrary:/ { print $NF; exit }' )
+	depends_on=$( echo "$toc_file" | awk '/^## DependsOn:/ { print $NF; exit }' )
+	optional_depends_on=$( echo "$toc_file" | awk '/^## OptionalDependsOn:/ { print $NF; exit }' )
+	eso_addon_version=$( echo "$toc_file" | awk '/^## AddOnVersion:/ { print $NF; exit }' )
 fi
 
 # Get the title of the project for using in the changelog.
@@ -939,6 +974,7 @@ unset toc_file
 [ "$slug" = "0" ] && slug=
 [ "$addonid" = "0" ] && addonid=
 [ "$wagoid" = "0" ] && wagoid=
+[ "$singularityid" = "0" ] && singularityid=
 
 # Automatic file type detection based on CurseForge rules
 # 1) Untagged commits will be marked as an alpha.
