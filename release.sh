@@ -2533,9 +2533,10 @@ if [ -z "$skip_zipfile" ]; then
 		echo "$_singularity_versions"
 		if [ -n "$_singularity_versions" ]; then
 			if [ -n "$game_version" ]; then
-				$game_version=$_singularity_versions
+				game_version=$_singularity_versions
 			fi
 		fi
+		echo "$game_version"
 	fi
 
 	if [ -n "$upload_singularity" ] ; then
