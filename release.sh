@@ -928,7 +928,8 @@ fi
 # Get the interface version for setting upload version.
 toc_file=$( sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$topdir/$tocfile" ) # go away bom, crlf
 if [[ "$game" == "eso" ]]; then
-	toc_version=$( echo "$toc_file" | awk '/^## APIVersion:/ { print $NF; exit }' )
+	# toc_version=$( echo "$toc_file" | awk '/^## APIVersion:/ { print $NF; exit }' )
+	toc_version=$( echo "$toc_file" | awk '/^## APIVersion:/ { print $0; exit }' | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## APIVersion[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' )
 fi
 if [[ "$game" == "wow" ]] && [ "$game_type" = "classic" ] && [ -z "$toc_version" ] && [ -z "$game_version" ]; then
 	toc_version=$( echo "$toc_file" | awk '/## Interface:[[:space:]]*113/ { print $NF; exit }' )
