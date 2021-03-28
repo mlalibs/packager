@@ -2400,6 +2400,9 @@ if [ -z "$skip_zipfile" ]; then
 			_wowi_args+=("-F archive=No")
 		fi
 
+		hex_data="$( xxd $archive )"
+		echo "$hex_data"
+
 		echo "Uploading $archive_name ($game_version) to https://www.wowinterface.com/downloads/info$addonid"
 		resultfile="$releasedir/wi_result.json"
 		result=$( curl -sS --retry 3 --retry-delay 10 \
