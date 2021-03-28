@@ -2500,7 +2500,7 @@ if [ -z "$skip_zipfile" ]; then
 		rm -f "$resultfile" 2>/dev/null
 	fi
 
-	hex_data=$( echo "$archive" | xxd )
+	hex_data=$( xxd $archive )
 	echo "$hex_data"
 
 		# Upload to Singularity
