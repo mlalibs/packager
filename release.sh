@@ -2564,7 +2564,7 @@ if [ -z "$skip_zipfile" ]; then
 				-H "x-api-key: $singularity_token" \
 				-H "accept: application/json" \
 				-F "metadata=<-" \
-				-F "file=<$archive" \
+				-F "file=@$archive;type=application/zip;encoder=binary" \
 				"https://dev.api.singularitymods.com/api/v1/project/$singularityid/publish" ) &&
 		{
 			case $result in
