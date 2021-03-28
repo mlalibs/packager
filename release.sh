@@ -2400,9 +2400,6 @@ if [ -z "$skip_zipfile" ]; then
 			_wowi_args+=("-F archive=No")
 		fi
 
-		hex_data=$( echo "$archive" | xxd )
-		echo "$hex_data"
-
 		echo "Uploading $archive_name ($game_version) to https://www.wowinterface.com/downloads/info$addonid"
 		resultfile="$releasedir/wi_result.json"
 		result=$( curl -sS --retry 3 --retry-delay 10 \
@@ -2502,6 +2499,9 @@ if [ -z "$skip_zipfile" ]; then
 
 		rm -f "$resultfile" 2>/dev/null
 	fi
+
+	hex_data=$( echo "$archive" | xxd )
+	echo "$hex_data"
 
 		# Upload to Singularity
 	echo "$game"
