@@ -2562,7 +2562,7 @@ if [ -z "$skip_zipfile" ]; then
 		result=$( echo "$_singularity_payload" | curl -sS --retry 3 --retry-delay 10 \
 				-w "%{http_code}" -o "$resultfile" \
 				-H "x-api-key: $singularity_token" \
-				-F "file=@$archive;encoder=8bit;type=application/zip" \
+				-F "file=@$archive;encoder=binary;type=application/zip" \
 				-F "metadata=<-" \
 				"https://dev.api.singularitymods.com/api/v1/project/$singularityid/publish" ) &&
 		{
