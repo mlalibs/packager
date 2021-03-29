@@ -2549,6 +2549,7 @@ if [ -z "$skip_zipfile" ]; then
 			"displayName": "$project_version$classic_tag",
 			"gameId": "$_singularity_game_id",
 			"gameVersion": $_singularity_game_version,
+			"version": "$project_version",
 		  "gameVersionFlavor": "$_singularity_game_version_flavor",
 		  "channel": "$_singularity_channel",
 		  "changelog": $( jq --slurp --raw-input '.' < "$pkgdir/$changelog" ),
@@ -2564,7 +2565,7 @@ if [ -z "$skip_zipfile" ]; then
 				-H "x-api-key: $singularity_token" \
 				-H "accept: application/json" \
 				-F "metadata=<-" \
-				-F "file=@$archive;type=application/zip" \
+				-F "file=@$archive" \
 				"https://dev.api.singularitymods.com/api/v1/project/$singularityid/publish" ) &&
 		{
 			case $result in
