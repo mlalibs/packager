@@ -236,6 +236,8 @@ while getopts ":celLzusop:dw:a:x:r:t:G:g:m:" opt; do
 				usage
 				exit 1
 			fi
+			pkgmeta_file="$OPTARG"
+			;;
 		n) # Set the package file name
 			if [ "$OPTARG" = "help" ]; then
 				cat <<-'EOF' >&2
