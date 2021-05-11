@@ -1072,7 +1072,7 @@ fi
 
 # Get the title of the project for using in the changelog.
 if [ -z "$project" ]; then
-	project=$( awk '/^## Title:/ { print $0; exit }' <<< "$toc_file" | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## Title[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' )
+	project=$( awk '/^## Title:/ { print $0; exit }' | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## Title[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' <<< "$toc_file" )
 fi
 # Grab CurseForge ID and WoWI ID from the TOC file if not set by the script.
 if [ -z "$slug" ]; then
