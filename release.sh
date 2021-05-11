@@ -2543,7 +2543,12 @@ if [ -z "$skip_zipfile" ]; then
 		_singularity_game_version_flavor="wow_retail"
 		if [ "$game" = "wow" ]; then
 			if [ "$game_type" = "classic" ]; then
+				classic_tag="-classic"
 				_singularity_game_version_flavor="wow_classic"
+			fi
+			if [ "$game_type" = "bc" ]; then
+			classic_tag="-bc"
+				_singularity_game_version_flavor="wow_burning_crusade"
 			fi
 		fi
 		if [ "$game" = "eso" ]; then
