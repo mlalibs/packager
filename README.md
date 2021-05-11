@@ -16,6 +16,8 @@ use that as the current version number.  It will search back through parent
 commits for the previous tag and generate a changelog containing the commits
 since that tag.
 
+## Customizing the build
+
 __release.sh__ uses the TOC file to determine the package name for the project.
 You can also set the CurseForge project id (`-p`), the WoWInterface addon
 id (`-w`) or the Wago project id (`-a`) by adding the following to the TOC file:
@@ -32,7 +34,9 @@ in <https://wowinterface.com/downloads/info5678-MyAddon>.
 
 Your Wago project id can be found on the developer dashboard.
 
-__release.sh__ can read the __.pkgmeta__ file and supports the following
+### The PackageMeta file
+
+__release.sh__ can read a __.pkgmeta__ file and supports the following
 directives. See the [wiki page](https://github.com/BigWigsMods/packager/wiki/Preparing-the-PackageMeta-File)
 for more info.
 
@@ -44,13 +48,13 @@ for more info.
 - *move-folders*
 - *package-as*
 - *enable-nolib-creation* (defaults to no) Caveats: nolib packages will only be
-  uploaded to GitHub and attached to a release. Unlike using the CurseForge
-  packager, manually uploading nolib packages has no affect for client users
-  that choose to download libraries separately.
+  uploaded to GitHub and attached to a release. Unlike with the CurseForge
+  packager, manually uploaded nolib packages will not be used by the client when
+  users have enabled downloading libraries separately.
 - *tools-used*
 - *required-dependencies*
 - *optional-dependencies*
-- *embedded-libraries* Note: All externals will be marked as embedded,
+- *embedded-libraries* Note: All fetched externals will be marked as embedded,
   overriding any manually set relations in the pkgmeta.
 
 You can also use a few directives for WoWInterface uploading.
@@ -62,7 +66,12 @@ You can also use a few directives for WoWInterface uploading.
   be used instead if set in the .pkgmeta.
 - *wowi-convert-changelog* : `yes|no` (defaults to yes) Convert a manual
   changelog in Markdown format to BBCode if you have [pandoc](http://pandoc.org/)
-  installed; otherwise, the manual changelog will be used as-is.
+  installed; otherwise, the manual changelog will be used as-is.  If set to `no`
+  when using a generated changelog, Markdown will be used instead of BBCode.
+  **Note**: Markdown support is experimental and needs to be requested on a
+  per-project basis.
+
+### String replacements
 
 __release.sh__ supports the following repository substitution keywords when
 copying the files from the checkout into the project directory. See the
@@ -77,11 +86,6 @@ for more info.
   - *namespace*
   - *same-key-is-true*
   - *table-name*
-- *@alpha@*...*@end-alpha@* / *@non-alpha@*...*@end-non-alpha@*
-- *@debug@*...*@end-debug@* / *@non-debug@*...*@end-non-debug@*
-- *@do-not-package@*...*@end-do-not-package@*
-- *@no-lib-strip@*...*@end-no-lib-strip@*
-- *@retail@*...*@end-retail@* / *@non-retail@*...*@end-non-retail@*
 - *@file-revision@*
 - *@project-revision@*
 - *@file-hash@*
@@ -98,24 +102,38 @@ for more info.
 - *@project-timestamp@*
 - *@project-version@*
 
-## Build type keywords
+### Build type keywords
 
-`alpha`, `debug`, `retail`, `no-lib-strip`, and `do-not-package` are build type
-keywords and are used to conditionally run a block of code based on the build
-type with the use of comments.
+Specific keywords used in a comment at the start (`@keyword@`) and end
+(`@end-keyword@`) of a block of code can be used to conditionally run that code
+based on the build type.  If the build type does not match, the block of code
+is comment out so line numbers do not change.
 
-`@do-not-package@` and `@end-do-not-package@` are a bit special. Everything
-between the tags, including the tags themselves, will be removed from the file.
-This will cause the line numbers of subsequent lines to change, which can result
-in bug report line numbers not matching the source code.  The typical usage is
-at the end of Lua files surrounding debugging functions and other code that end
-users should never see or execute.
+Supported keywords and when the code block will run:
+
+- `alpha`: in untagged builds.
+- `debug`: never.  Code will only run when using an unpackaged source.
+- `do-not-package`: never.  Same as `debug` except removed from the packaged
+  file.
+- `no-lib-strip`: _(not supported in Lua files)_ in any build other than a
+  *nolib* build.
+- `retail`,`version-retail`,`version-classic`,`version-bc`: based on game
+  version.
+
+`do-not-package` is a bit special. Everything between the tags, including the
+tags themselves, will always be removed from the packaged file. This will cause
+the line numbers of subsequent lines to change, which can result in bug report
+line numbers not matching the source code.  The typical usage is at the end of
+Lua files surrounding debugging functions and other code that end users should
+never see or execute.
 
 All keywords except `do-not-package` can be prefixed with `non-` to inverse the
 logic.  When doing this, the keywords should start and end a **block comment**
 as shown below.
 
-### In Lua files
+More examples are available on the [wiki page](https://github.com/BigWigsMods/packager/wiki/Repository-Keyword-Substitutions#debug-replacements).
+
+#### In Lua files
 
 `--@keyword@` and `--@end-keyword@`  
 turn into `--[===[@keyword` and `--@end-keyword]===]`.
@@ -123,7 +141,7 @@ turn into `--[===[@keyword` and `--@end-keyword]===]`.
 `--[===[@non-keyword@` and `--@end-non-keyword@]===]`  
 turn into `--@non-keyword@` and `--@end-non-keyword@`.
 
-### In XML files
+#### In XML files
 
 **Note:** XML doesn't allow nested comments so make sure not to nest keywords.
 If you need to nest keywords, you can do so in the TOC instead.
@@ -134,7 +152,7 @@ turn into `<!--@keyword` and `@end-keyword@-->`.
 `<!--@non-keyword@` and `@end-non-keyword@-->`  
 turn into `<!--@non-keyword@-->` and `<!--@end-non-keyword@-->`.
 
-### In TOC files
+#### In TOC files
 
 The lines with `#@keyword@` and `#@end-keyword@` get removed, as well as every
 line in-between.
@@ -142,7 +160,75 @@ line in-between.
 The lines with `#@non-keyword@` and `#@end-non-keyword@` get removed, as well as
 removing a '# ' at the beginning of each line in-between.
 
-## Using release.sh to build locally
+### Changing the file name
+
+__release.sh__ uses the file name template `"{package-name}-{project-version}{nolib}{classic}"`
+for the addon zip file.  This can be changed with the `-n` switch (`release.sh
+-n "{package-name}-{project-version}"`).
+
+These tokens are always replaced with their value:
+
+- `{package-name}`
+- `{project-revision}`
+- `{project-hash}`
+- `{project-abbreviated-hash}`
+- `{project-author}`
+- `{project-date-iso}`
+- `{project-date-integer}`
+- `{project-timestamp}`
+- `{project-version}`
+- `{game-type}`
+- `{release-type}`
+
+These tokens are "flags" and are conditionally shown prefixed with a dash based
+on the build type:
+
+- `{alpha}`
+- `{beta}`
+- `{nolib}`
+- `{classic}`
+
+`{classic}` has some additional magic:
+
+1. It will show as the non-retail build type, so either `-classic` or `-bc`.
+2. It will not be shown if "-classic" or "-bc" is in the project version.
+3. If it is included in the file name (it is by default) and #2 does not apply,
+   it will also be appended to the file label (i.e., the name shown on
+   CurseForge).
+
+## Building for multiple game versions
+
+__release.sh__ needs to know what version of World of Warcraft the package is
+targeting.  This is normally automatically detected using the `## Interface:`
+line of the addon's TOC file.
+
+If your addon supports both retail and classic in the same branch, you can use
+multiple `## Interface-Type:` lines in your TOC file.  Only one `## Interface:`
+line will be included in the packaged TOC file based on the targeted game
+version.
+
+    ## Interface: 90005
+    ## Interface-Retail: 90005
+    ## Interface-Classic: 11306
+    ## Interface-BC: 20501
+
+You specify what version of the game you're targeting with the `-g` switch. You
+can use a specific version (`release.sh -g 1.13.6`) or you can use the game type
+(`release.sh -g classic`).  Using a game type will set the game version based on
+the appropriate TOC `## Interface` value.
+
+You can also set multiple specific versions as a comma delimited list using the
+`-g` switch (`release.sh -g 1.13.6,2.5.1,9.0.5`).  This will still only build
+one package, with the the last version listed used as the target version for
+the build.
+
+**Setting multiple versions is not recommended!** The addon will always be
+marked "Out of date" in-game for versions that do not match the TOC interface
+value for the last version set. So even if you don't need any special file
+processing, it will always be best to run the packager multiple times so the TOC
+interface value is correct for each game version.
+
+## Building locally
 
 The recommended way to include __release.sh__ in a project is to:
 
@@ -151,30 +237,9 @@ The recommended way to include __release.sh__ in a project is to:
 3. Ignore the *.release* subdirectory in __.gitignore__.
 4. Run __release.sh__.
 
-## Using release.sh to build a Classic release
-
-To make use of the `@retail@` and `@non-retail@` keywords, __release.sh__ needs
-to know what version of World of Warcraft the package is targeting.  This is
-automatically detected using the `## Interface:` line of the addon's TOC file.
-
-If your addon supports both retail and classic in the same branch, you can use
-keywords in your TOC file to include the appropriate `## Interface:` line in the
-package.
-
-    #@retail@
-    ## Interface: 80300
-    #@end-retail@
-    #@non-retail@
-    # ## Interface: 11305
-    #@end-non-retail@
-
-__release.sh__ will set the build type as retail by default.  You can change
-this by passing a different game version as an argument.  To target classic this
-would be `release.sh -g 1.13.5`.
-
 ## Usage
 
-    Usage: release.sh [-cdelLosuz] [-t topdir] [-r releasedir] [-p curse-id] [-w wowi-id] [-g game-version] [-m pkgmeta.yml]
+    Usage: release.sh [options]
       -c               Skip copying files into the package directory.
       -d               Skip uploading.
       -e               Skip checkout of external repositories.
@@ -189,8 +254,9 @@ would be `release.sh -g 1.13.5`.
       -p curse-id      Set the project id used on CurseForge for localization and uploading. (Use 0 to unset the TOC value)
       -w wowi-id       Set the addon id used on WoWInterface for uploading. (Use 0 to unset the TOC value)
       -a wago-id       Set the project id used on Wago Addons for uploading. (Use 0 to unset the TOC value)
-      -g game-version  Set the game version to use for CurseForge uploading.
+      -g game-version  Set the game version to use for uploading.
       -m pkgmeta.yaml  Set the pkgmeta file to use.
+      -n package-name  Set the package zip file name. Use "-n help" for more info.
 
 ### Uploading
 
@@ -209,7 +275,7 @@ __release.sh__ will attempt to load environment variables from a `.env` file in
 the topdir or current working directory.  You can also edit __release.sh__ and
 enter the tokens near the top of the file.
 
-### Dependancies
+### Dependencies
 
 __release.sh__ is mostly POSIX-compatible, so it should run in any Unix-like
 environment provided the following are available:
