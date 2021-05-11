@@ -53,8 +53,8 @@ skip_zipfile=
 skip_upload=
 skip_cf_upload=
 pkgmeta_file=
-game="wow"
-game_type="retail"
+game=
+game_type=
 game_version=
 game_version_id=
 toc_version=
@@ -367,6 +367,8 @@ fi
 [ -z "$wowi_token" ] && wowi_token=$WOWI_API_TOKEN
 [ -z "$wago_token" ] && wago_token=$WAGO_API_TOKEN
 [ -z "$singularity_token" ] && singularity_token=$SINGULARITY_API_TOKEN
+[ -z "$game" ] && game=$GAME
+[ -z "$game" ] && game="wow"
 
 # Set $releasedir to the directory which will contain the generated addon zipfile.
 if [ -z "$releasedir" ]; then
@@ -1061,6 +1063,7 @@ fi
 
 # If ESO, grab other important information
 if [[ "$game" == "eso" ]]; then
+	game_type="retail"
 	is_library==$( echo "$toc_file" | awk '/^## IsLibrary:/ { print $NF; exit }' )
 	depends_on=$( echo "$toc_file" | awk '/^## DependsOn:/ { print $NF; exit }' )
 	optional_depends_on=$( echo "$toc_file" | awk '/^## OptionalDependsOn:/ { print $NF; exit }' )
