@@ -230,10 +230,45 @@ while getopts ":celLzusop:dw:a:x:r:t:G:g:m:" opt; do
 					game_version="$OPTARG"
 			esac
 			;;
-	m)
-		# Set the pkgmeta file.
-		if [ ! -f "$OPTARG" ]; then
-			echo "Invalid argument for option \"-m\" - File \"$OPTARG\" does not exist." >&2
+		m) # Set the pkgmeta file.
+			if [ ! -f "$OPTARG" ]; then
+				echo "Invalid argument for option \"-m\" - File \"$OPTARG\" does not exist." >&2
+				usage
+				exit 1
+			fi
+		n) # Set the package file name
+			if [ "$OPTARG" = "help" ]; then
+				cat <<-'EOF' >&2
+				Set the package zip file name. There are several string substitutions you can
+				use to include version control and build type infomation in the file name.
+				The default file name is "{package-name}-{project-version}{nolib}{classic}".
+				Tokens: {package-name}{project-revision}{project-hash}{project-abbreviated-hash}
+				        {project-author}{project-date-iso}{project-date-integer}{project-timestamp}
+				        {project-version}{game-type}{release-type}
+				Flags:  {alpha}{beta}{nolib}{classic}
+				Tokens are always replaced with their value. Flags are shown prefixed with a dash
+				depending on the build type.
+				EOF
+				exit 0
+			fi
+			file_name="$OPTARG"
+			if skip_invalid=true filename_filter "$file_name" | grep -q '[{}]'; then
+				tokens=$( skip_invalid=true filename_filter "$file_name" | sed -e '/^[^{]*{\|}[^{]*{\|}[^{]*/s//}{/g' -e 's/^}\({.*}\){$/\1/' )
+				echo "Invalid argument for option \"-n\" - Invalid substitutions: $tokens" >&2
+				exit 1
+			fi
+			;;
+		:)
+			echo "Option \"-$OPTARG\" requires an argument." >&2
+			usage
+			exit 1
+			;;
+		\?)
+			if [ "$OPTARG" = "?" ] || [ "$OPTARG" = "h" ]; then
+				usage
+				exit 0
+			fi
+			echo "Unknown option \"-$OPTARG\"" >&2
 			usage
 			exit 1
 			;;
