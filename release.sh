@@ -1001,7 +1001,7 @@ toc_file=$(
 	sed -e $'1s/^\xEF\xBB\xBF//' -e $'s/\r//g' "$topdir/$toc_path" | toc_filter alpha ${_tf_alpha} | toc_filter debug true
 )
 if [[ "$game" == "eso" ]]; then
-	root_toc_version=$( awk '/^## APIVersion:/ { print $0; exit }' | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## APIVersion[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' <<< "$toc_file" )
+	root_toc_version=$( awk '/^## APIVersion:/ { print $0; exit }' <<< "$toc_file"  | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## APIVersion[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' )
 fi
 if [[ "$game" == "wow" ]]; then
 	root_toc_version=$( awk '/^## Interface:/ { print $NF; exit }' <<< "$toc_file" )
@@ -1072,7 +1072,7 @@ fi
 
 # Get the title of the project for using in the changelog.
 if [ -z "$project" ]; then
-	project=$( awk '/^## Title:/ { print $0; exit }' | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## Title[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' <<< "$toc_file" )
+	project=$( awk '/^## Title:/ { print $0; exit }' <<< "$toc_file" | sed -e 's/|c[0-9A-Fa-f]\{8\}//g' -e 's/|r//g' -e 's/|T[^|]*|t//g' -e 's/## Title[[:space:]]*:[[:space:]]*\(.*\)/\1/' -e 's/[[:space:]]*$//' )
 fi
 # Grab CurseForge ID and WoWI ID from the TOC file if not set by the script.
 if [ -z "$slug" ]; then
