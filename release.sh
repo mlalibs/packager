@@ -2563,7 +2563,7 @@ if [ -z "$skip_zipfile" ]; then
 				fi
 			fi
 			echo "$_api_version_string"
-			_singularity_version_resp=$( curl -s -H "x-api-token: $singularity_token" https://dev.api.singularitymods.com/api/v1/game/releases/$_singularity_game_id/$_api_version_string)
+			_singularity_version_resp=$( curl -s -H "x-api-token: $singularity_token" https://api.singularitymods.com/api/v2/game/$_singularity_game_id/patches/interface/$_api_version_string)
 			if [ -n "$_singularity_version_resp" ]; then
 				_singularity_game_version=$( echo "$_singularity_version_resp" | jq -r .versions 2>/dev/null )
 			else
@@ -2598,7 +2598,7 @@ if [ -z "$skip_zipfile" ]; then
 				-H "accept: application/json" \
 				-F "metadata=<-" \
 				-F "file=@$archive" \
-				"https://dev.api.singularitymods.com/api/v1/project/$singularityid/publish" ) &&
+				"https://api.singularitymods.com/api/v2/project/$singularityid/publish" ) &&
 		{
 			case $result in
 				200|201) echo "Success!" ;;
